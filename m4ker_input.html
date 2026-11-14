@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<!--
+    m4ker 입력 페이지
+    제품 사진 + 예시 스타일 + 프롬프트 입력
+-->
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>m4ker · 만들기</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+    <link rel="stylesheet" href="./css/m4ker_style.css">
+
+    <!-- 입력 페이지 전용 스타일 (공통 스타일은 ./css/m4ker_style.css) -->
+    <style>
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(165deg, #f1ecfd 0%, var(--mist) 45%, var(--mist-deep) 100%);
+    }
+
+    .make {
+        flex: 1;
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 6vw 120px;
+    }
+
+    .make .section-head {
+        margin-bottom: 56px;
+        animation: riseIn 0.9s var(--ease-out) both;
+    }
+
+    .make-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 28px;
+        align-items: start;
+        animation: riseIn 0.9s var(--ease-out) 0.15s both;
+    }
+
+    .panel {
+        background: var(--glass-strong);
+        border: 1px solid var(--glass-edge);
+        border-radius: 22px;
+        box-shadow: var(--shadow-lift), 0 0 0 1px var(--line-faint);
+        padding: 28px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .panel + .panel {
+        margin-top: 28px;
+    }
+
+    .step-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .step-title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    .step-hint {
+        margin: -8px 0 18px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+    }
+
+    /* ---------- 1. 제품 사진 ---------- */
+    .drop {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        aspect-ratio: 1;
+        border: 1.5px dashed rgba(90, 63, 216, 0.4);
+        border-radius: 16px;
+        background: rgba(244, 241, 253, 0.85);
+        text-align: center;
+        cursor: pointer;
+        overflow: hidden;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .drop:hover,
+    .drop.is-dragover {
+        background: #ece6fb;
+        border-color: var(--iris);
+    }
+
+    .drop input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .drop:focus-within {
+        outline: 3px solid var(--iris);
+        outline-offset: 3px;
+    }
+
+    .drop-icon {
+        width: 40px;
+        height: 40px;
+        color: var(--iris);
+    }
+
+    .drop-main {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .drop-sub {
+        font-size: 13px;
+        color: var(--ink-faint);
+    }
+
+    .drop img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #ffffff;
+    }
+
+    .drop.has-image .drop-icon,
+    .drop.has-image .drop-main,
+    .drop.has-image .drop-sub {
+        visibility: hidden;
+    }
+
+    .file-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .file-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .text-btn {
+        flex-shrink: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 600;
+        color: var(--iris);
+        cursor: pointer;
+    }
+
+    /* ---------- 2. 예시 스타일 ---------- */
+    .styles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .style-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .style-thumb {
+        display: block;
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        border-radius: 12px;
+        object-fit: cover;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        transition: transform 0.25s var(--ease-out), outline-color 0.2s;
+    }
+
+    .style-card:hover .style-thumb {
+        transform: translateY(-3px);
+    }
+
+    .style-name {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .style-card.is-selected .style-thumb {
+        outline-color: var(--iris);
+    }
+
+    .style-card.is-selected .style-name {
+        color: var(--iris);
+    }
+
+    /* 예시 이미지가 없을 때 쓰는 장면 타일 (시작 페이지 tile-1~4와 같은 색감) */
+    .tile-warm {
+        background:
+            radial-gradient(circle at 72% 22%, rgba(255, 244, 214, 0.95), transparent 42%),
+            linear-gradient(180deg, #f6e7d6 0 58%, #e8dccf 58% 100%);
+    }
+
+    .tile-green {
+        background:
+            radial-gradient(circle at 28% 30%, #b7cda6 0 16%, transparent 17%),
+            radial-gradient(circle at 40% 22%, #a9c296 0 11%, transparent 12%),
+            linear-gradient(180deg, #e0e9d8 0 60%, #c9d6bf 60% 100%);
+    }
+
+    .tile-sunset {
+        background: linear-gradient(180deg, #f7d3bf 0%, #f0b9a9 58%, #e6d0c5 58% 100%);
+    }
+
+    .tile-studio {
+        background:
+            radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.6), transparent 60%),
+            linear-gradient(180deg, #dcdfe6 0 60%, #c0c5cf 60% 100%);
+    }
+
+    /* ---------- 3. 프롬프트 ---------- */
+    .prompt-box {
+        position: relative;
+    }
+
+    .prompt-box textarea {
+        display: block;
+        width: 100%;
+        min-height: 150px;
+        padding: 16px 18px 34px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #ffffff;
+        font: inherit;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--ink);
+        resize: vertical;
+        transition: border-color 0.2s;
+    }
+
+    .prompt-box textarea::placeholder {
+        color: var(--ink-faint);
+    }
+
+    .prompt-box textarea:focus {
+        outline: none;
+        border-color: var(--iris);
+    }
+
+    .prompt-count {
+        position: absolute;
+        right: 14px;
+        bottom: 10px;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .make-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 22px;
+    }
+
+    .make-status {
+        flex: 1;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .btn:disabled {
+        background: #cfc6ee;
+        box-shadow: none;
+        transform: none;
+        cursor: not-allowed;
+    }
+
+    /* =========================================================
+       반응형
+       ========================================================= */
+    @media (max-width: 860px) {
+        .make-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .drop {
+            aspect-ratio: 4 / 3;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .panel {
+            padding: 20px;
+        }
+
+        .styles {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .make-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+    </style>
+</head>
+<body>
+
+    <nav class="hero-nav" aria-label="주요 메뉴">
+        <a class="nav-logo" href="./m4ker_startpage.html">m4ker</a>
+        <ul class="nav-links">
+            <li><a href="#">로그인</a></li>
+        </ul>
+    </nav>
+
+    <main class="make">
+        <div class="section-head">
+            <h1 class="section-title">어떤 광고를 만들까요?</h1>
+            <p class="section-sub">제품 사진을 올리고 원하는 분위기를 골라 주세요.<br>예시 스타일을 누르면 프롬프트에 설명이 들어가요.</p>
+        </div>
+
+        <form class="make-grid" id="makeForm">
+
+            <!-- 1. 제품 사진 -->
+            <section class="panel" aria-labelledby="step1">
+                <div class="step-head">
+                    <span class="step-num">1</span>
+                    <h2 class="step-title" id="step1">제품 사진</h2>
+                </div>
+
+                <label class="drop" id="drop">
+                    <input type="file" id="imageInput" accept="image/*">
+                    <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+                    </svg>
+                    <span class="drop-main">사진을 끌어다 놓거나 눌러서 선택</span>
+                    <span class="drop-sub">PNG, JPG · 제품이 잘 보이는 사진</span>
+                    <img id="preview" alt="선택한 제품 사진 미리보기" hidden>
+                </label>
+
+                <div class="file-row" id="fileRow" hidden>
+                    <span class="file-name" id="fileName"></span>
+                    <button class="text-btn" type="button" id="clearImage">다시 선택</button>
+                </div>
+            </section>
+
+            <div>
+                <!-- 2. 예시 스타일 -->
+                <section class="panel" aria-labelledby="step2">
+                    <div class="step-head">
+                        <span class="step-num">2</span>
+                        <h2 class="step-title" id="step2">예시 스타일</h2>
+                    </div>
+                    <p class="step-hint">하나를 고르면 프롬프트에 스타일 설명이 추가돼요. 다른 스타일을 누르면 바뀌고, 빼고 싶으면 프롬프트에서 직접 지워 주세요.</p>
+
+                    <div class="styles">
+                        <button class="style-card" type="button"
+                                data-caption="on a warm wooden table, soft morning sunlight, cozy cafe mood">
+                            <span class="style-thumb tile-warm" aria-hidden="true"></span>
+                            <span class="style-name">따뜻한 카페</span>
+                        </button>
+                        <button class="style-card" type="button"
+                                data-caption="surrounded by green leaves, fresh natural light, outdoor garden mood">
+                            <span class="style-thumb tile-green" aria-hidden="true"></span>
+                            <span class="style-name">싱그러운 자연</span>
+                        </button>
+                        <button class="style-card" type="button"
+                                data-caption="soft pink and orange sunset tones, dreamy warm atmosphere">
+                            <span class="style-thumb tile-sunset" aria-hidden="true"></span>
+                            <span class="style-name">노을빛 감성</span>
+                        </button>
+                        <button class="style-card" type="button"
+                                data-caption="clean minimal studio background, soft even lighting, subtle shadow">
+                            <span class="style-thumb tile-studio" aria-hidden="true"></span>
+                            <span class="style-name">미니멀 스튜디오</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 3. 프롬프트 -->
+                <section class="panel" aria-labelledby="step3">
+                    <div class="step-head">
+                        <span class="step-num">3</span>
+                        <h2 class="step-title" id="step3">프롬프트</h2>
+                    </div>
+
+                    <div class="prompt-box">
+                        <label for="prompt" class="step-hint" style="display:block;margin-top:-8px">원하는 광고 분위기를 자유롭게 적어 주세요.</label>
+                        <textarea id="prompt" maxlength="300"
+                                  placeholder="예) 크리스마스 분위기, 따뜻한 조명 아래 테이블 위에 놓인 모습"></textarea>
+                        <span class="prompt-count" id="promptCount">0 / 300</span>
+                    </div>
+
+                    <div class="make-actions">
+                        <p class="make-status" id="makeStatus" role="status">제품 사진과 프롬프트를 입력하면 생성할 수 있어요.</p>
+                        <button class="btn btn-primary" type="submit" id="generateBtn" disabled>생성하기</button>
+                    </div>
+                </section>
+            </div>
+        </form>
+    </main>
+
+    <footer class="site-foot">
+        <span class="foot-logo">m4ker</span>
+        <span>BOAZ 미니프로젝트 4조</span>
+    </footer>
+
+    <script src="./JS/m4ker_input.js"></script>
+</body>
+</html>
