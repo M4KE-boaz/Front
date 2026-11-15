@@ -98,7 +98,7 @@ function initStyles(onChange) {
             if (current && prompt.value.includes(current)) {
                 prompt.value = prompt.value.replace(current, caption); // 이전 스타일 교체
             } else {
-                const text = prompt.value.trim();
+                const text = prompt.value.trim().replace(/[,\s]+$/, ''); // 끝 쉼표 중복 방지
                 prompt.value = text ? `${text}, ${caption}` : caption;
             }
 
