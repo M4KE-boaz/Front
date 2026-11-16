@@ -90,6 +90,10 @@ function initStyles(onChange) {
     }
 
     cards.forEach((card) => {
+        // 카드 아래에 캡션 미리보기 채우기
+        const desc = card.querySelector('.style-desc');
+        if (desc) desc.textContent = card.dataset.caption;
+
         card.addEventListener('click', () => {
             const caption = card.dataset.caption;
             if (prompt.value.includes(caption)) return; // 이미 들어가 있으면 그대로
