@@ -743,7 +743,12 @@
 
         <!-- 세부 설정 (기본값으로 충분, 필요할 때만 펼침) -->
         <details class="panel advanced" id="advanced">
-            <summary>세부 설정</summary>
+            <summary>세부 설정 · 생성 비교</summary>
+            <div class="opt-row" style="padding: 16px">
+                <button type="button" class="btn" id="baselinePreset">기존 설정</button>
+                <button type="button" class="btn" id="qualityPreset">개선 후보 설정</button>
+            </div>
+            <p style="padding: 0 16px">같은 제품·참고 사진·시드로 비교해 보세요. 결과는 제품마다 달라요. 개선 후보와 기존 설정을 비교해 보세요.</p>
             <div class="opt-grid">
                 <div class="opt" id="modeOpt">
                     생성 방식
@@ -768,7 +773,7 @@
                 </label>
                 <label class="opt">
                     <span>세로 위치 <output id="yOut">0.50</output></span>
-                    <input type="range" id="centerY" min="0.25" max="0.75" step="0.05" value="0.5">
+                    <input type="range" id="centerY" min="0.25" max="0.75" step="0.01" value="0.5">
                 </label>
                 <label class="opt">
                     <span>참고 강도 <output id="adapterOut">0.60</output></span>
@@ -783,6 +788,15 @@
                     시드
                     <input type="number" id="seed" min="0" step="1" value="42">
                     <small>같은 시드와 설정이면 같은 결과가 나와요.</small>
+                </label>
+                <label class="opt">
+                    <span>가장자리 부드럽게 <output id="featherOut">0.0</output> px</span>
+                    <input type="range" id="featherRadius" min="0" max="4" step="0.5" value="0">
+                    <small>반투명 경계를 조정해요. 제품 내부는 보존해요.</small>
+                </label>
+                <label class="opt">
+                    <span><input type="checkbox" id="enhancePrompt"> 촬영 품질·접지 그림자 문구 추가</span>
+                    <small>생성에만 적용해요. 그림자·자연광 문구와 중복·떠 있는 물체 억제 문구를 추가해요.</small>
                 </label>
                 <label class="opt">
                     제품 마스크 (선택)

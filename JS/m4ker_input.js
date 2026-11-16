@@ -364,6 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ['centerY', 'yOut', 2],
         ['adapterScale', 'adapterOut', 2],
         ['steps', 'stepsOut', 0],
+        ['featherRadius', 'featherOut', 1],
     ];
     ranges.forEach(([inputId, outId, digits]) => {
         const input = $(inputId);
@@ -372,6 +373,20 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('input', sync);
         sync();
     });
+
+    function applyPreset(improved) {
+        const values = { productScale: improved ? 0.55 : 0.65,
+            centerX: 0.5, centerY: improved ? 0.58 : 0.5,
+            adapterScale: improved ? 0.45 : 0.6,
+            featherRadius: improved ? 1.5 : 0, steps: 20, seed: 42 };
+        Object.entries(values).forEach(([id, value]) => {
+            $(id).value = value;
+            $(id).dispatchEvent(new Event('input'));
+        });
+        $('enhancePrompt').checked = improved;
+    }
+    $('baselinePreset').addEventListener('click', () => applyPreset(false));
+    $('qualityPreset').addEventListener('click', () => applyPreset(true));
 
     ui.versionSelect.addEventListener('change', async () => {
         try {
@@ -400,6 +415,8 @@ document.addEventListener('DOMContentLoaded', () => {
         data.append('product_scale', $('productScale').value);
         data.append('center_x', $('centerX').value);
         data.append('center_y', $('centerY').value);
+        data.append('feather_radius', $('featherRadius').value);
+        data.append('enhance_prompt', $('enhancePrompt').checked ? 'true' : 'false');
         data.append('fallback', $('fallback').checked ? 'true' : 'false');
         return data;
     }
