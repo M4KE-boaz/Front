@@ -9,6 +9,7 @@ m4ker 웹 화면 (BOAZ 미니프로젝트 4조). 정적 HTML/CSS/JS이며, 검�
 | `JS/m4ker_api.js` | 백엔드 연결 (서버 찾기, 요청/오류 처리) |
 | `JS/m4ker_input.js` | 입력 화면 동작 |
 | `css/m4ker_style.css` | 공통 스타일 |
+| `tools/demo-video/` | 시연 영상 녹화 도구 ([사용법](tools/demo-video/README.md)) |
 
 ## 실행
 
