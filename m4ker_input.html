@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<!--
+    m4ker 입력 페이지
+    제품 사진 + 예시 스타일 + 프롬프트 입력
+-->
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>m4ker · 만들기</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+    <link rel="stylesheet" href="./css/m4ker_style.css">
+
+    <!-- 입력 페이지 전용 스타일 (공통 스타일은 ./css/m4ker_style.css) -->
+    <style>
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(165deg, #f1ecfd 0%, var(--mist) 45%, var(--mist-deep) 100%);
+    }
+
+    .make {
+        flex: 1;
+        width: 100%;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 6vw 120px;
+    }
+
+    .make .section-head {
+        margin-bottom: 56px;
+        animation: riseIn 0.9s var(--ease-out) both;
+    }
+
+    .make-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 28px;
+        align-items: start;
+        animation: riseIn 0.9s var(--ease-out) 0.15s both;
+    }
+
+    .panel {
+        background: var(--glass-strong);
+        border: 1px solid var(--glass-edge);
+        border-radius: 22px;
+        box-shadow: var(--shadow-lift), 0 0 0 1px var(--line-faint);
+        padding: 28px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .panel + .panel {
+        margin-top: 28px;
+    }
+
+    .step-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .step-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        font-family: var(--font-display);
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .step-title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    .step-hint {
+        margin: -8px 0 18px;
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+    }
+
+    /* ---------- 1. 제품 사진 ---------- */
+    .drop {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        aspect-ratio: 1;
+        border: 1.5px dashed rgba(90, 63, 216, 0.4);
+        border-radius: 16px;
+        background: rgba(244, 241, 253, 0.85);
+        text-align: center;
+        cursor: pointer;
+        overflow: hidden;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .drop:hover,
+    .drop.is-dragover {
+        background: #ece6fb;
+        border-color: var(--iris);
+    }
+
+    .drop input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .drop:focus-within {
+        outline: 3px solid var(--iris);
+        outline-offset: 3px;
+    }
+
+    .drop-icon {
+        width: 40px;
+        height: 40px;
+        color: var(--iris);
+    }
+
+    .drop-main {
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .drop-sub {
+        font-size: 13px;
+        color: var(--ink-faint);
+    }
+
+    .drop img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #ffffff;
+    }
+
+    .drop.has-image .drop-icon,
+    .drop.has-image .drop-main,
+    .drop.has-image .drop-sub {
+        visibility: hidden;
+    }
+
+    .file-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .file-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .text-btn {
+        flex-shrink: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 600;
+        color: var(--iris);
+        cursor: pointer;
+    }
+
+    /* ---------- 2. 예시 스타일 ---------- */
+    .styles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .style-card {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .style-thumb {
+        display: block;
+        width: 100%;
+        aspect-ratio: 3 / 4;
+        border-radius: 12px;
+        object-fit: cover;
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        transition: transform 0.25s var(--ease-out), outline-color 0.2s;
+    }
+
+    .style-card:hover .style-thumb {
+        transform: translateY(-3px);
+    }
+
+    .style-name {
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .style-card.is-selected .style-thumb {
+        outline-color: var(--iris);
+    }
+
+    .style-card.is-selected .style-name {
+        color: var(--iris);
+    }
+
+    /* 예시 이미지가 없을 때 쓰는 장면 타일 (시작 페이지 tile-1~4와 같은 색감) */
+    .tile-warm {
+        background:
+            radial-gradient(circle at 72% 22%, rgba(255, 244, 214, 0.95), transparent 42%),
+            linear-gradient(180deg, #f6e7d6 0 58%, #e8dccf 58% 100%);
+    }
+
+    .tile-green {
+        background:
+            radial-gradient(circle at 28% 30%, #b7cda6 0 16%, transparent 17%),
+            radial-gradient(circle at 40% 22%, #a9c296 0 11%, transparent 12%),
+            linear-gradient(180deg, #e0e9d8 0 60%, #c9d6bf 60% 100%);
+    }
+
+    .tile-sunset {
+        background: linear-gradient(180deg, #f7d3bf 0%, #f0b9a9 58%, #e6d0c5 58% 100%);
+    }
+
+    .tile-studio {
+        background:
+            radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.6), transparent 60%),
+            linear-gradient(180deg, #dcdfe6 0 60%, #c0c5cf 60% 100%);
+    }
+
+    /* ---------- 3. 프롬프트 ---------- */
+    .prompt-box {
+        position: relative;
+    }
+
+    .prompt-box textarea {
+        display: block;
+        width: 100%;
+        min-height: 150px;
+        padding: 16px 18px 34px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #ffffff;
+        font: inherit;
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--ink);
+        resize: vertical;
+        transition: border-color 0.2s;
+    }
+
+    .prompt-box textarea::placeholder {
+        color: var(--ink-faint);
+    }
+
+    .prompt-box textarea:focus {
+        outline: none;
+        border-color: var(--iris);
+    }
+
+    .prompt-count {
+        position: absolute;
+        right: 14px;
+        bottom: 10px;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .make-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 16px;
+        margin-top: 22px;
+    }
+
+    .make-status {
+        flex: 1;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .btn:disabled {
+        background: #cfc6ee;
+        box-shadow: none;
+        transform: none;
+        cursor: not-allowed;
+    }
+
+    /* ---------- 서버 연결 상태 (상단 메뉴) ---------- */
+    .server-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--glass);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink-soft);
+    }
+
+    .server-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--ink-faint);
+    }
+
+    .server-pill[data-state="ok"] .server-dot { background: #2fa36b; }
+    .server-pill[data-state="partial"] .server-dot { background: #e0a326; }
+    .server-pill[data-state="off"] .server-dot { background: #d64b5a; }
+
+    .notice {
+        margin: 0 auto 28px;
+        padding: 14px 18px;
+        border-radius: 14px;
+        border: 1px solid rgba(224, 163, 38, 0.45);
+        background: rgba(255, 243, 214, 0.85);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .notice code {
+        font-size: 13px;
+        background: rgba(255, 255, 255, 0.7);
+        padding: 1px 6px;
+        border-radius: 6px;
+    }
+
+    /* ---------- 세부 설정 ---------- */
+    .advanced {
+        margin-top: 28px;
+        animation: riseIn 0.9s var(--ease-out) 0.25s both;
+    }
+
+    .advanced summary {
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 700;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .advanced summary::-webkit-details-marker { display: none; }
+
+    .advanced summary::after {
+        content: "+";
+        font-family: var(--font-display);
+        font-weight: 300;
+        font-size: 20px;
+        color: var(--iris);
+    }
+
+    .advanced[open] summary::after { content: "–"; }
+
+    .opt-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px 28px;
+        margin-top: 22px;
+    }
+
+    .opt {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .opt small {
+        font-weight: 400;
+        color: var(--ink-faint);
+        line-height: 1.5;
+    }
+
+    .opt output {
+        font-weight: 500;
+        color: var(--iris);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .opt input[type="range"] { accent-color: var(--iris); }
+
+    .opt input[type="number"],
+    .opt select {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ffffff;
+        font: inherit;
+        font-weight: 500;
+        color: var(--ink);
+    }
+
+    .opt-row {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        font-weight: 500;
+    }
+
+    .opt-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .opt-row input { accent-color: var(--iris); }
+
+    /* ---------- 4·5. 결과 ---------- */
+    .results {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 28px;
+        align-items: start;
+        margin-top: 28px;
+        animation: riseIn 0.7s var(--ease-out) both;
+    }
+
+    /* display:flex 등을 준 요소에도 hidden 속성이 먹도록 */
+    [hidden] { display: none !important; }
+    .results .panel + .panel { margin-top: 0; }
+
+    /* GPU 생성이 꺼진 서버: 검색 결과만 넓게 */
+    .results.search-only { grid-template-columns: 1fr; }
+    .results.search-only .result-panel { display: none; }
+    .results.search-only .refs { grid-template-columns: repeat(5, 1fr); }
+    .nav-links { align-items: center; }
+
+    .query-line {
+        margin: -8px 0 16px;
+        font-size: 13px;
+        color: var(--ink-soft);
+        line-height: 1.6;
+    }
+
+    .refs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+    }
+
+    .ref-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .ref-card img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 12px;
+        background: var(--mist-deep);
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        transition: transform 0.25s var(--ease-out), outline-color 0.2s;
+    }
+
+    .ref-card:hover img { transform: translateY(-3px); }
+    .ref-card.is-selected img { outline-color: var(--iris); }
+
+    .ref-meta {
+        font-size: 12px;
+        color: var(--ink-soft);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .ref-card.is-selected .ref-meta { color: var(--iris); font-weight: 600; }
+
+    .result-frame {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        border-radius: 16px;
+        background: rgba(244, 241, 253, 0.85);
+        border: 1px solid var(--line-faint);
+        overflow: hidden;
+        text-align: center;
+        font-size: 14px;
+        color: var(--ink-soft);
+        padding: 24px;
+    }
+
+    .result-frame img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #ffffff;
+    }
+
+    .spinner {
+        width: 34px;
+        height: 34px;
+        margin: 0 auto 12px;
+        border-radius: 50%;
+        border: 3px solid var(--lilac);
+        border-top-color: var(--iris);
+        animation: spin 0.9s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .badge {
+        display: inline-block;
+        margin-bottom: 12px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #ffe2a8;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .result-msg {
+        margin-top: 14px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+        word-break: break-all;
+    }
+
+    .result-msg.is-error { color: #b3263a; }
+
+    .result-links {
+        display: flex;
+        gap: 16px;
+        margin-top: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--iris);
+    }
+
+    .result-links a:hover { text-decoration: underline; }
+
+    .masks {
+        margin-top: 16px;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .masks summary { cursor: pointer; font-weight: 600; }
+
+    .mask-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .mask-row figure { display: flex; flex-direction: column; gap: 4px; }
+
+    .mask-row img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: contain;
+        border-radius: 10px;
+        background: repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0 / 16px 16px;
+    }
+
+    .warn {
+        margin-top: 16px;
+        font-size: 12px;
+        color: var(--ink-faint);
+    }
+
+    /* =========================================================
+       반응형
+       ========================================================= */
+    @media (max-width: 860px) {
+        .make-grid,
+        .results {
+            grid-template-columns: 1fr;
+        }
+
+        .drop {
+            aspect-ratio: 4 / 3;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .panel {
+            padding: 20px;
+        }
+
+        .styles {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .results.search-only .refs {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .make-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+    </style>
+</head>
+<body>
+
+    <nav class="hero-nav" aria-label="주요 메뉴">
+        <a class="nav-logo" href="./m4ker_startpage.html">M<span class="m4-four">4</span>KER</a>
+        <ul class="nav-links">
+            <li>
+                <span class="server-pill" id="serverPill" data-state="checking" role="status">
+                    <span class="server-dot" aria-hidden="true"></span>
+                    <span id="serverText">서버 확인 중…</span>
+                </span>
+            </li>
+            <li><a href="#">로그인</a></li>
+        </ul>
+    </nav>
+
+    <main class="make">
+        <div class="section-head">
+            <h1 class="section-title">어떤 광고를 만들까요?</h1>
+            <p class="section-sub">제품 사진을 올리고 원하는 분위기를 골라 주세요.<br>예시 스타일을 누르면 프롬프트에 설명이 들어가요.</p>
+        </div>
+
+        <div class="notice" id="serverNotice" hidden></div>
+
+        <form class="make-grid" id="makeForm">
+
+            <!-- 1. 제품 사진 -->
+            <section class="panel" aria-labelledby="step1">
+                <div class="step-head">
+                    <span class="step-num">1</span>
+                    <h2 class="step-title" id="step1">제품 사진</h2>
+                </div>
+
+                <label class="drop" id="drop">
+                    <input type="file" id="imageInput" accept="image/*">
+                    <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+                    </svg>
+                    <span class="drop-main">사진을 끌어다 놓거나 눌러서 선택</span>
+                    <span class="drop-sub">PNG, JPG · 제품이 잘 보이는 사진</span>
+                    <img id="preview" alt="선택한 제품 사진 미리보기" hidden>
+                </label>
+
+                <div class="file-row" id="fileRow" hidden>
+                    <span class="file-name" id="fileName"></span>
+                    <button class="text-btn" type="button" id="clearImage">다시 선택</button>
+                </div>
+            </section>
+
+            <div>
+                <!-- 2. 예시 스타일 -->
+                <section class="panel" aria-labelledby="step2">
+                    <div class="step-head">
+                        <span class="step-num">2</span>
+                        <h2 class="step-title" id="step2">예시 스타일</h2>
+                    </div>
+                    <p class="step-hint">하나를 고르면 프롬프트에 스타일 설명이 추가돼요. 다른 스타일을 누르면 바뀌고, 빼고 싶으면 프롬프트에서 직접 지워 주세요.</p>
+
+                    <div class="styles">
+                        <button class="style-card" type="button"
+                                data-caption="on a warm wooden table, soft morning sunlight, cozy cafe mood">
+                            <span class="style-thumb tile-warm" aria-hidden="true"></span>
+                            <span class="style-name">따뜻한 카페</span>
+                        </button>
+                        <button class="style-card" type="button"
+                                data-caption="surrounded by green leaves, fresh natural light, outdoor garden mood">
+                            <span class="style-thumb tile-green" aria-hidden="true"></span>
+                            <span class="style-name">싱그러운 자연</span>
+                        </button>
+                        <button class="style-card" type="button"
+                                data-caption="soft pink and orange sunset tones, dreamy warm atmosphere">
+                            <span class="style-thumb tile-sunset" aria-hidden="true"></span>
+                            <span class="style-name">노을빛 감성</span>
+                        </button>
+                        <button class="style-card" type="button"
+                                data-caption="clean minimal studio background, soft even lighting, subtle shadow">
+                            <span class="style-thumb tile-studio" aria-hidden="true"></span>
+                            <span class="style-name">미니멀 스튜디오</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 3. 프롬프트 -->
+                <section class="panel" aria-labelledby="step3">
+                    <div class="step-head">
+                        <span class="step-num">3</span>
+                        <h2 class="step-title" id="step3">프롬프트</h2>
+                    </div>
+
+                    <div class="prompt-box">
+                        <label for="prompt" class="step-hint" style="display:block;margin-top:-8px">원하는 광고 분위기를 자유롭게 적어 주세요.</label>
+                        <textarea id="prompt" maxlength="300"
+                                  placeholder="예) 크리스마스 분위기, 따뜻한 조명 아래 테이블 위에 놓인 모습"></textarea>
+                        <span class="prompt-count" id="promptCount">0 / 300</span>
+                    </div>
+
+                    <div class="make-actions">
+                        <p class="make-status" id="makeStatus" role="status">제품 사진과 프롬프트를 입력하면 생성할 수 있어요.</p>
+                        <button class="btn btn-primary" type="submit" id="generateBtn" disabled>생성하기</button>
+                    </div>
+                </section>
+            </div>
+        </form>
+
+        <!-- 세부 설정 (기본값으로 충분, 필요할 때만 펼침) -->
+        <details class="panel advanced" id="advanced">
+            <summary>세부 설정 · 생성 비교</summary>
+            <div class="opt-row" style="padding: 16px">
+                <button type="button" class="btn" id="baselinePreset">기존 설정</button>
+                <button type="button" class="btn" id="qualityPreset">개선 후보 설정</button>
+            </div>
+            <p style="padding: 0 16px">같은 제품·참고 사진·시드로 비교해 보세요. 결과는 제품마다 달라요. 개선 후보와 기존 설정을 비교해 보세요.</p>
+            <div class="opt-grid">
+                <div class="opt" id="modeOpt">
+                    생성 방식
+                    <div class="opt-row">
+                        <label><input type="radio" name="mode" value="reference" checked> 찾은 스타일 참고</label>
+                        <label><input type="radio" name="mode" value="text_only"> 프롬프트만</label>
+                    </div>
+                    <small id="modeHint">찾은 스타일 사진 1장을 참고해서 배경을 만들어요.</small>
+                </div>
+                <label class="opt" id="versionOpt" hidden>
+                    검색 모델
+                    <select id="versionSelect"></select>
+                    <small>바꾸면 스타일을 다시 찾아요.</small>
+                </label>
+                <label class="opt">
+                    <span>제품 크기 <output id="scaleOut">0.65</output></span>
+                    <input type="range" id="productScale" min="0.2" max="0.8" step="0.05" value="0.65">
+                </label>
+                <label class="opt">
+                    <span>가로 위치 <output id="xOut">0.50</output></span>
+                    <input type="range" id="centerX" min="0.25" max="0.75" step="0.05" value="0.5">
+                </label>
+                <label class="opt">
+                    <span>세로 위치 <output id="yOut">0.50</output></span>
+                    <input type="range" id="centerY" min="0.25" max="0.75" step="0.01" value="0.5">
+                </label>
+                <label class="opt">
+                    <span>참고 강도 <output id="adapterOut">0.60</output></span>
+                    <input type="range" id="adapterScale" min="0" max="1" step="0.05" value="0.6">
+                    <small>높을수록 참고 사진을 많이 따라가요. 사진 속 물건이 복사될 수도 있어요.</small>
+                </label>
+                <label class="opt">
+                    <span>생성 단계 <output id="stepsOut">20</output></span>
+                    <input type="range" id="steps" min="1" max="50" step="1" value="20">
+                </label>
+                <label class="opt">
+                    시드
+                    <input type="number" id="seed" min="0" step="1" value="42">
+                    <small>같은 시드와 설정이면 같은 결과가 나와요.</small>
+                </label>
+                <label class="opt">
+                    <span>가장자리 부드럽게 <output id="featherOut">0.0</output> px</span>
+                    <input type="range" id="featherRadius" min="0" max="4" step="0.5" value="0">
+                    <small>반투명 경계를 조정해요. 제품 내부는 보존해요.</small>
+                </label>
+                <label class="opt">
+                    <span><input type="checkbox" id="enhancePrompt"> 촬영 품질·접지 그림자 문구 추가</span>
+                    <small>생성에만 적용해요. 그림자·자연광 문구와 중복·떠 있는 물체 억제 문구를 추가해요.</small>
+                </label>
+                <label class="opt">
+                    제품 마스크 (선택)
+                    <input type="file" id="maskInput" accept="image/png">
+                    <small>배경이 잘못 지워질 때만. 원본과 같은 크기, 흰색=제품.</small>
+                </label>
+                <div class="opt">
+                    참고 실패 시
+                    <div class="opt-row">
+                        <label><input type="checkbox" id="fallback"> 프롬프트만으로 다시 시도</label>
+                    </div>
+                </div>
+            </div>
+        </details>
+
+        <!-- 4·5. 결과 -->
+        <div class="results" id="results" hidden>
+            <section class="panel" aria-labelledby="step4">
+                <div class="step-head">
+                    <span class="step-num">4</span>
+                    <h2 class="step-title" id="step4">비슷한 광고 스타일</h2>
+                </div>
+                <p class="query-line" id="queryLine"></p>
+                <div class="refs" id="refs"></div>
+                <p class="step-hint" id="refsHint" style="margin:14px 0 0">하나를 고르고 생성하기를 누르면 그 사진을 참고해요. 점수는 비슷한 정도이고 품질 점수가 아니에요.</p>
+            </section>
+
+            <section class="panel result-panel" aria-labelledby="step5">
+                <div class="step-head">
+                    <span class="step-num">5</span>
+                    <h2 class="step-title" id="step5">생성 결과</h2>
+                </div>
+                <div class="result-frame" id="resultFrame">
+                    <span>생성하기를 누르면 여기에 결과가 나와요.</span>
+                </div>
+                <p class="result-msg" id="resultMsg" role="status"></p>
+                <div class="result-links" id="resultLinks" hidden>
+                    <a id="downloadImage" download>이미지 저장</a>
+                    <a id="downloadMeta" target="_blank" rel="noopener">메타데이터</a>
+                </div>
+                <details class="masks" id="masks" hidden>
+                    <summary>제품 분리 과정 보기</summary>
+                    <div class="mask-row">
+                        <figure><img id="fgImg" alt="추출한 제품"><figcaption>추출한 제품</figcaption></figure>
+                        <figure><img id="keepImg" alt="보존 영역"><figcaption>그대로 둔 영역</figcaption></figure>
+                        <figure><img id="repaintImg" alt="새로 그린 영역"><figcaption>새로 그린 영역</figcaption></figure>
+                    </div>
+                </details>
+                <p class="warn" id="warn">참고한 사진 속 제품이나 글자가 결과에 복사될 수 있어요.</p>
+            </section>
+        </div>
+    </main>
+
+    <footer class="site-foot">
+        <span class="foot-logo">M<span class="m4-four">4</span>KER</span>
+        <span>BOAZ 미니프로젝트 4조</span>
+    </footer>
+
+    <script src="./JS/m4ker_api.js"></script>
+    <script src="./JS/m4ker_input.js"></script>
+</body>
+</html>
