@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<!--
+    m4ker 입력 페이지 · 버전 2 (단계별로 펼쳐지는 방식)
+    앱 파이프라인 명세(APP_PIPELINE.md)의 흐름을 따름
+    ① 제품 사진 + 스타일 문장 → ② 검색 Top-5에서 참조 선택 → ③ (선택) 고급 설정 → ④ 결과
+    백엔드가 없을 때는 JS의 가짜 API(mock)로 동작
+-->
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M4KER · 만들기</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+    <link rel="stylesheet" href="./css/m4ker_style.css">
+
+    <!-- 입력 페이지(버전 2) 전용 스타일 (공통 스타일은 ./css/m4ker_style.css) -->
+    <style>
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(165deg, #f1ecfd 0%, #ebe5fb 55%, var(--mist-deep) 100%);
+    }
+
+    [hidden] {
+        display: none !important;
+    }
+
+    /* =========================================================
+       배경: 시작 화면(.hero-bg)과 같은 색 덩어리
+       ========================================================= */
+    .page-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(70px);
+        opacity: 0.85;
+        animation: drift 22s ease-in-out infinite alternate;
+    }
+
+    .blob-1 { width: 52vw; height: 52vw; top: -18vw; right: -10vw; background: var(--haze); }
+    .blob-2 { width: 48vw; height: 48vw; bottom: -20vw; left: -12vw; background: var(--periwinkle); animation-duration: 26s; animation-delay: -6s; }
+    .blob-3 { width: 36vw; height: 36vw; top: 20%; left: 18%; background: var(--lilac); animation-duration: 30s; animation-delay: -12s; }
+    .blob-4 { width: 40vw; height: 26vw; top: 30%; left: 30%; background: rgba(255, 255, 255, 0.85); filter: blur(90px); animation-duration: 34s; }
+
+    @keyframes drift {
+        0%   { transform: translate(0, 0) scale(1); }
+        50%  { transform: translate(4vw, 3vh) scale(1.08); }
+        100% { transform: translate(-3vw, -2vh) scale(0.96); }
+    }
+
+    .hero-nav,
+    .make,
+    .site-foot {
+        position: relative;
+        z-index: 1;
+    }
+
+    .site-foot {
+        justify-content: center;
+        background: transparent;
+    }
+
+    /* =========================================================
+       공통 조각
+       ========================================================= */
+    .make {
+        flex: 1;
+        width: 100%;
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 24px 6vw 120px;
+    }
+
+    .make .section-head {
+        margin-bottom: 40px;
+        animation: riseIn 0.9s var(--ease-out) both;
+    }
+
+    .glass {
+        background: var(--glass-strong);
+        border: 1px solid var(--glass-edge);
+        border-radius: 24px;
+        box-shadow: var(--shadow-lift), 0 0 0 1px var(--line-faint);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+
+    .text-btn {
+        flex-shrink: 0;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 700;
+        color: var(--iris);
+        cursor: pointer;
+    }
+
+    .text-btn.is-quiet {
+        font-weight: 500;
+        color: var(--ink-soft);
+    }
+
+    .btn {
+        cursor: pointer;
+        border: 0;
+        font-family: inherit;
+    }
+
+    .btn:disabled {
+        background: #cfc6ee;
+        box-shadow: none;
+        transform: none;
+        cursor: not-allowed;
+    }
+
+    .btn.is-loading {
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    .btn-line {
+        background: #ffffff;
+        border: 1px solid var(--line);
+        color: var(--ink);
+    }
+
+    .btn-line:hover {
+        border-color: var(--iris);
+        color: var(--iris);
+    }
+
+    .warn-line {
+        font-size: 12px;
+        color: #9a6700;
+    }
+
+    .msg-error {
+        color: #c0362c;
+    }
+
+    .msg-warn {
+        color: #9a6700;
+    }
+
+    .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .section-label {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .section-label h2 {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+    }
+
+    .section-label p {
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .reveal-in {
+        animation: riseIn 0.6s var(--ease-out) both;
+    }
+
+    /* 서버 상태 안내 (문제가 있거나 가짜 데이터일 때만 보임) */
+    .notice {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: fit-content;
+        max-width: 100%;
+        margin: -16px auto 24px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: #fff6e6;
+        border: 1px solid #f5d9a6;
+        font-size: 13px;
+        font-weight: 600;
+        color: #8a5a00;
+    }
+
+    /* =========================================================
+       ① 입력 줄: 제품 사진 + 스타일 문장 + 검색
+       ========================================================= */
+    .search {
+        display: grid;
+        grid-template-columns: 150px 1fr 150px;
+        gap: 16px;
+        padding: 16px;
+        transition: grid-template-columns 0.4s var(--ease-out);
+        animation: riseIn 0.9s var(--ease-out) 0.12s both;
+    }
+
+    .is-searched .search {
+        grid-template-columns: 96px 1fr 150px;
+    }
+
+    .drop {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        aspect-ratio: 1;
+        border: 1.5px dashed rgba(90, 63, 216, 0.4);
+        border-radius: 16px;
+        background: rgba(244, 241, 253, 0.85);
+        text-align: center;
+        cursor: pointer;
+        overflow: hidden;
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .drop:hover,
+    .drop.is-dragover {
+        background: #ece6fb;
+        border-color: var(--iris);
+    }
+
+    .drop input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .drop:focus-within {
+        outline: 3px solid var(--iris);
+        outline-offset: 3px;
+    }
+
+    .drop-icon { width: 28px; height: 28px; color: var(--iris); }
+    .drop-main { font-size: 14px; font-weight: 700; }
+    .drop-sub { font-size: 12px; color: var(--ink-faint); }
+
+    .is-searched .drop-sub { display: none; }
+
+    .drop img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #ffffff;
+    }
+
+    .drop.has-image .drop-icon,
+    .drop.has-image .drop-main,
+    .drop.has-image .drop-sub {
+        visibility: hidden;
+    }
+
+    .prompt-box {
+        position: relative;
+    }
+
+    .prompt-box textarea {
+        display: block;
+        width: 100%;
+        height: 100%;
+        min-height: 96px;
+        padding: 16px 20px 32px;
+        border: 1px solid transparent;
+        border-radius: 16px;
+        background: var(--mist);
+        font: inherit;
+        font-size: 17px;
+        line-height: 1.6;
+        color: var(--ink);
+        resize: none;
+        transition: border-color 0.2s, background-color 0.2s;
+    }
+
+    .prompt-box textarea::placeholder { color: var(--ink-faint); }
+
+    .prompt-box textarea:focus {
+        outline: none;
+        border-color: var(--iris);
+        background: #ffffff;
+    }
+
+    .prompt-count {
+        position: absolute;
+        right: 16px;
+        bottom: 10px;
+        font-size: 12px;
+        color: var(--ink-faint);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .prompt-count.is-over { color: #c0362c; font-weight: 700; }
+
+    .search .btn {
+        height: 100%;
+        min-width: 0;
+        padding: 0 16px;
+        border-radius: 18px;
+    }
+
+    .search-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        min-height: 24px;
+        margin-top: 12px;
+        padding: 0 8px;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .file-row {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px 10px;
+        min-width: 0;
+    }
+
+    .file-name {
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .mask-name {
+        color: var(--ink);
+        font-weight: 600;
+    }
+
+    .make-status {
+        margin-left: auto;
+        text-align: right;
+    }
+
+    /* 예시 문장: 검색 전에는 큰 카드, 검색 후에는 작은 버튼 */
+    .examples {
+        margin-top: 44px;
+        animation: riseIn 0.9s var(--ease-out) 0.24s both;
+    }
+
+    .styles {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+
+    .style-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .style-thumb {
+        display: block;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        margin-bottom: 6px;
+        border-radius: 18px;
+        outline: 2px solid transparent;
+        outline-offset: 3px;
+        box-shadow: 0 18px 36px -24px rgba(60, 40, 150, 0.45);
+        transition: transform 0.25s var(--ease-out), outline-color 0.2s;
+    }
+
+    .style-card:hover .style-thumb { transform: translateY(-4px); }
+    .style-name { font-size: 15px; font-weight: 700; }
+
+    .style-desc {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--ink-faint);
+    }
+
+    .style-card.is-selected .style-thumb { outline-color: var(--iris); }
+    .style-card.is-selected .style-name { color: var(--iris); }
+
+    .is-searched .examples {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+        padding: 0 8px;
+        animation: none;
+    }
+
+    .is-searched .examples .section-label {
+        margin: 0 4px 0 0;
+    }
+
+    .is-searched .examples .section-label h2 {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink-soft);
+    }
+
+    .is-searched .examples .section-label p,
+    .is-searched .style-desc {
+        display: none;
+    }
+
+    .is-searched .styles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .is-searched .style-card {
+        flex-direction: row;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 12px 5px 5px;
+        border: 1px solid var(--line-faint);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .is-searched .style-thumb {
+        width: 22px;
+        height: 22px;
+        margin: 0;
+        border-radius: 50%;
+        box-shadow: none;
+    }
+
+    .is-searched .style-name { font-size: 12px; }
+    .is-searched .style-card:hover .style-thumb { transform: none; }
+
+    .is-searched .style-card.is-selected {
+        border-color: var(--iris);
+        box-shadow: 0 0 0 1px var(--iris);
+    }
+
+    .is-searched .style-card.is-selected .style-thumb { outline: none; }
+
+    /* 장면 타일 (예시 사진 대신 쓰는 색 그라데이션) */
+    .tile-warm { background: radial-gradient(circle at 72% 22%, rgba(255, 244, 214, 0.95), transparent 42%), linear-gradient(180deg, #f6e7d6 0 58%, #e8dccf 58% 100%); }
+    .tile-green { background: radial-gradient(circle at 28% 30%, #b7cda6 0 16%, transparent 17%), radial-gradient(circle at 40% 22%, #a9c296 0 11%, transparent 12%), linear-gradient(180deg, #e0e9d8 0 60%, #c9d6bf 60% 100%); }
+    .tile-sunset { background: linear-gradient(180deg, #f7d3bf 0%, #f0b9a9 58%, #e6d0c5 58% 100%); }
+    .tile-studio { background: radial-gradient(ellipse at 50% 100%, rgba(255, 255, 255, 0.6), transparent 60%), linear-gradient(180deg, #dcdfe6 0 60%, #c0c5cf 60% 100%); }
+    /* 가짜 검색 결과에만 쓰는 타일 */
+    .tile-ocean { background: radial-gradient(circle at 70% 24%, rgba(255, 255, 255, 0.8), transparent 30%), linear-gradient(180deg, #cfe6f5 0 56%, #9fc6df 56% 100%); }
+    .tile-marble { background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.7) 45%, transparent 50%), linear-gradient(180deg, #ecebee 0 60%, #d6d3da 60% 100%); }
+    .tile-night { background: radial-gradient(circle at 30% 30%, rgba(255, 214, 140, 0.8) 0 3%, transparent 4%), radial-gradient(circle at 62% 20%, rgba(255, 214, 140, 0.8) 0 2.5%, transparent 3.5%), linear-gradient(180deg, #3b3355 0 60%, #2a2440 60% 100%); }
+    .tile-snow { background: radial-gradient(circle at 25% 25%, #ffffff 0 4%, transparent 5%), radial-gradient(circle at 70% 35%, #ffffff 0 3%, transparent 4%), linear-gradient(180deg, #e6ecf3 0 60%, #f7f9fc 60% 100%); }
+
+    /* =========================================================
+       ② 검색 결과 Top-5
+       ========================================================= */
+    .results {
+        margin-top: 36px;
+    }
+
+    .generate {
+        margin-top: 8px;
+    }
+
+    .results[hidden] + .generate {
+        margin-top: 36px;
+    }
+
+    .translated {
+        margin: -6px 0 14px;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .translated b { color: var(--ink); }
+
+    .hits {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px;
+    }
+
+    .hit {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .hit-img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 16px;
+        object-fit: cover;
+        outline: 2px solid transparent;
+        outline-offset: 3px;
+        box-shadow: 0 18px 36px -24px rgba(60, 40, 150, 0.45);
+        transition: transform 0.25s var(--ease-out), outline-color 0.2s;
+    }
+
+    .hit:hover .hit-img { transform: translateY(-4px); }
+
+    .hit-check {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: none;
+        width: 26px;
+        height: 26px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: var(--iris);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .hit-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .hit-meta span {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--ink-faint);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .hit.is-selected .hit-img { outline-color: var(--iris); }
+    .hit.is-selected .hit-check { display: flex; }
+    .hit.is-selected .hit-meta { color: var(--iris); }
+
+    /* 생성 바 */
+    .genbar {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 20px;
+        align-items: center;
+        margin-top: 26px;
+        padding: 16px;
+    }
+
+    .genbar-ref {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .genbar-ref .hit-img {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+        box-shadow: none;
+    }
+
+    .genbar-ref p { font-size: 14px; font-weight: 700; }
+
+    .genbar-ref small {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink-faint);
+    }
+
+    .genbar-mid {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .seg {
+        display: inline-grid;
+        grid-template-columns: 1fr 1fr;
+        width: 260px;
+        padding: 3px;
+        border-radius: 10px;
+        background: var(--mist);
+    }
+
+    .seg label {
+        position: relative;
+        padding: 7px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--ink-soft);
+        cursor: pointer;
+    }
+
+    .seg input {
+        position: absolute;
+        opacity: 0;
+    }
+
+    .seg label:has(input:checked) {
+        background: #ffffff;
+        color: var(--ink);
+        box-shadow: 0 2px 8px rgba(60, 40, 150, 0.12);
+    }
+
+    .seg label:has(input:focus-visible) {
+        outline: 2px solid var(--iris);
+    }
+
+    .adv-toggle,
+    .advanced .text-btn {
+        font-size: 13px;
+    }
+
+    .adv-toggle em {
+        font-style: normal;
+        font-weight: 500;
+        color: var(--ink-faint);
+    }
+
+    .genbar .btn {
+        padding: 18px 34px;
+    }
+
+    .seg label.is-disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+    .genbar-thumb {
+        flex-shrink: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 12px;
+        background: none;
+        cursor: zoom-in;
+    }
+
+    .genbar-thumb:disabled {
+        cursor: default;
+    }
+
+    .text-thumb {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--mist);
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--ink-faint);
+    }
+
+    .zoom-link {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+    }
+
+    .seg-notice {
+        margin-top: 6px;
+        padding: 0 8px;
+        font-size: 13px;
+    }
+
+    .ref-dialog {
+        margin: auto; /* 공통 리셋(margin: 0) 때문에 가운데 정렬을 다시 지정 */
+        width: min(560px, calc(100vw - 32px));
+        padding: 20px;
+        border: 0;
+        border-radius: 22px;
+        background: #ffffff;
+        color: var(--ink);
+        box-shadow: var(--shadow-lift);
+    }
+
+    .ref-dialog::backdrop {
+        background: rgba(36, 18, 95, 0.35);
+        backdrop-filter: blur(4px);
+    }
+
+    .ref-dialog-img {
+        width: 100%;
+        max-width: 512px;
+        margin: 0 auto;
+    }
+
+    .ref-dialog-img > * {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 14px;
+        object-fit: contain;
+    }
+
+    .ref-dialog-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--ink-soft);
+    }
+
+    .ref-dialog-foot .btn {
+        min-width: 0;
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    /* =========================================================
+       ③ 고급 설정 (선택)
+       ========================================================= */
+    .advanced {
+        display: grid;
+        grid-template-columns: 1fr 1fr 200px;
+        gap: 28px;
+        margin-top: 14px;
+        padding: 24px;
+    }
+
+    .field {
+        margin-bottom: 16px;
+    }
+
+    .field-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .field-label small {
+        margin-right: auto;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--ink-faint);
+    }
+
+    .field-label output {
+        font-weight: 500;
+        color: var(--ink-soft);
+        font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+        width: 100%;
+        accent-color: var(--iris);
+    }
+
+    .seed-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #ffffff;
+        font: inherit;
+        font-size: 14px;
+        color: var(--ink);
+    }
+
+    .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: var(--ink-soft);
+        cursor: pointer;
+    }
+
+    .check input { accent-color: var(--iris); }
+
+    .adv-note {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--ink-faint);
+    }
+
+    .placement {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid var(--line-faint);
+        border-radius: 12px;
+        background: repeating-conic-gradient(#efedf6 0 25%, #ffffff 0 50%) 0 0 / 20px 20px;
+    }
+
+    .placement-msg {
+        margin-top: 8px;
+        font-size: 12px;
+    }
+
+    /* =========================================================
+       ④ 결과
+       ========================================================= */
+    .result {
+        display: grid;
+        grid-template-columns: 500px 1fr;
+        gap: 32px;
+        margin-top: 26px;
+        padding: 20px;
+    }
+
+    .result-img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 16px;
+        background: var(--mist);
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #e9f7ef;
+        font-size: 12px;
+        font-weight: 700;
+        color: #1e7a4a;
+    }
+
+    .badge.is-mock {
+        padding: 8px 14px;
+        background: #fff1d6;
+        font-size: 13px;
+        color: #8a5a00;
+    }
+
+    .result h3 {
+        margin: 12px 0 8px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+    .result-sub {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+    }
+
+    .used {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 20px 0;
+    }
+
+    .used div {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px 8px 8px;
+        border-radius: 12px;
+        background: var(--mist);
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .used img,
+    .used .hit-img {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        box-shadow: none;
+    }
+
+    .used img {
+        object-fit: contain;
+        background: #ffffff;
+    }
+
+    .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .actions .btn {
+        min-width: 0;
+        padding: 14px 22px;
+        font-size: 14px;
+    }
+
+    .details {
+        margin-top: 22px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line-faint);
+    }
+
+    .details summary {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--iris);
+        cursor: pointer;
+        list-style: none;
+    }
+
+    .details summary::-webkit-details-marker { display: none; }
+    .details summary::before { content: "▸ "; }
+    .details[open] summary::before { content: "▾ "; }
+
+    .details summary em {
+        font-style: normal;
+        font-weight: 500;
+        color: var(--ink-faint);
+    }
+
+    .masks {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin: 14px 0;
+    }
+
+    .masks img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        border: 1px solid var(--line-faint);
+        border-radius: 10px;
+        background: repeating-conic-gradient(#efedf6 0 25%, #ffffff 0 50%) 0 0 / 16px 16px;
+    }
+
+    .masks p {
+        margin-top: 6px;
+        font-size: 12px;
+        text-align: center;
+        color: var(--ink-soft);
+    }
+
+    .meta-json {
+        overflow-x: auto;
+        margin: 0 0 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line-faint);
+        border-radius: 12px;
+        background: #ffffff;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 12px;
+        line-height: 1.6;
+        color: var(--ink-soft);
+    }
+
+    /* =========================================================
+       반응형
+       ========================================================= */
+    @media (max-width: 960px) {
+        .hits { grid-template-columns: repeat(3, 1fr); }
+        .genbar { grid-template-columns: 1fr; }
+        .advanced { grid-template-columns: 1fr 1fr; }
+        .advanced .placement-col { grid-column: 1 / -1; max-width: 260px; }
+        .result { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 860px) {
+        .search,
+        .is-searched .search {
+            grid-template-columns: 110px 1fr;
+        }
+
+        .search .btn {
+            grid-column: 1 / -1;
+            height: auto;
+            padding: 16px;
+        }
+
+        .styles { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 520px) {
+        .search,
+        .is-searched .search {
+            grid-template-columns: 1fr;
+        }
+
+        .drop { aspect-ratio: 16 / 9; }
+        .hits { grid-template-columns: repeat(2, 1fr); }
+        .advanced { grid-template-columns: 1fr; }
+        .masks { grid-template-columns: 1fr 1fr; }
+
+        .search-meta,
+        .section-label {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .make-status {
+            margin-left: 0;
+            text-align: left;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .blob { animation: none; }
+    }
+    </style>
+</head>
+<body>
+
+    <div class="page-bg" aria-hidden="true">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <span class="blob blob-3"></span>
+        <span class="blob blob-4"></span>
+    </div>
+
+    <nav class="hero-nav" aria-label="주요 메뉴">
+        <a class="nav-logo" href="./m4ker_startpage.html">M<span class="m4-four">4</span>KER</a>
+        <ul class="nav-links">
+            <li><a href="#">로그인</a></li>
+        </ul>
+    </nav>
+
+    <main class="make" id="make">
+        <div class="section-head">
+            <h1 class="section-title">어떤 광고를 만들까요?</h1>
+            <p class="section-sub">제품 사진을 올리고 원하는 분위기를 검색해 보세요.</p>
+        </div>
+
+        <!-- 서버 상태 안내: 문제가 있거나 가짜 데이터로 동작할 때만 보임 -->
+        <p class="notice" id="notice" role="status" hidden></p>
+
+        <!-- ① 입력 줄 -->
+        <form id="searchForm" novalidate>
+            <div class="search glass">
+                <label class="drop" id="drop">
+                    <input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp">
+                    <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+                    </svg>
+                    <span class="drop-main">제품 사진</span>
+                    <span class="drop-sub">PNG · JPG · WebP</span>
+                    <img id="preview" alt="선택한 제품 사진 미리보기" hidden>
+                </label>
+
+                <div class="prompt-box">
+                    <label for="prompt" class="sr-only">원하는 광고 분위기 (영어 권장)</label>
+                    <textarea id="prompt" maxlength="1000"
+                              placeholder="원하는 분위기를 영어로 적거나, 아래 예시를 눌러 보세요.&#10;예) christmas mood, warm lights on a wooden table"></textarea>
+                    <span class="prompt-count" id="promptCount">0 / 1000</span>
+                </div>
+
+                <button class="btn btn-primary" type="submit" id="searchBtn" disabled>스타일 검색</button>
+            </div>
+
+            <div class="search-meta">
+                <div class="file-row">
+                    <span class="file-name" id="fileName"></span>
+                    <button class="text-btn" type="button" id="clearImage" hidden>다시 선택</button>
+                    <!-- 선택 기능: 배경 분리가 잘못될 때 쓰는 제품 마스크 -->
+                    <label class="text-btn is-quiet" id="maskLabel" hidden>
+                        제품 마스크 추가 (선택)
+                        <input type="file" id="maskInput" accept="image/png" class="sr-only">
+                    </label>
+                    <span class="mask-name" id="maskName" hidden></span>
+                    <button class="text-btn is-quiet" type="button" id="clearMask" hidden>마스크 빼기</button>
+                </div>
+                <p class="make-status" id="searchStatus" role="status">제품 사진과 원하는 분위기를 입력해 주세요.</p>
+            </div>
+            <p class="seg-notice msg-warn" id="segNotice" hidden>배경 자동 분리를 지금 쓸 수 없어요. 일반 사진은 제품 마스크(PNG)나 투명 배경 PNG가 필요해요.</p>
+        </form>
+
+        <!-- 예시 문장: 검색 전에는 큰 카드, 검색 후에는 작은 버튼 -->
+        <section class="examples" aria-labelledby="examplesTitle">
+            <div class="section-label">
+                <h2 id="examplesTitle">이런 분위기는 어때요?</h2>
+                <p>누르면 문장이 채워져요. 다른 걸 누르면 바뀌고, 빼려면 문장에서 지워 주세요.</p>
+            </div>
+            <div class="styles">
+                <button class="style-card" type="button" data-caption="on a warm wooden table, soft morning sunlight, cozy cafe mood">
+                    <span class="style-thumb tile-warm" aria-hidden="true"></span>
+                    <span class="style-name">따뜻한 카페</span>
+                    <span class="style-desc"></span>
+                </button>
+                <button class="style-card" type="button" data-caption="surrounded by green leaves, fresh natural light, outdoor garden mood">
+                    <span class="style-thumb tile-green" aria-hidden="true"></span>
+                    <span class="style-name">싱그러운 자연</span>
+                    <span class="style-desc"></span>
+                </button>
+                <button class="style-card" type="button" data-caption="soft pink and orange sunset tones, dreamy warm atmosphere">
+                    <span class="style-thumb tile-sunset" aria-hidden="true"></span>
+                    <span class="style-name">노을빛 감성</span>
+                    <span class="style-desc"></span>
+                </button>
+                <button class="style-card" type="button" data-caption="clean minimal studio background, soft even lighting, subtle shadow">
+                    <span class="style-thumb tile-studio" aria-hidden="true"></span>
+                    <span class="style-name">미니멀 스튜디오</span>
+                    <span class="style-desc"></span>
+                </button>
+            </div>
+        </section>
+
+        <!-- ② 검색 결과 Top-5 + 생성 바 -->
+        <section class="results reveal-in" id="results" aria-labelledby="resultsTitle" hidden>
+            <div class="section-label">
+                <h2 id="resultsTitle">비슷한 광고 사진 5장</h2>
+                <p>참조할 사진을 하나 골라 주세요. 점수는 문장과의 유사도예요 (확률·품질 점수 아님).</p>
+            </div>
+            <p class="translated" id="translated" hidden></p>
+            <div class="hits" id="hits"></div>
+        </section>
+
+        <!-- 생성: 문장만 사용(text-only)은 검색 없이도 가능, 참조 사용은 검색 후 -->
+        <section class="generate reveal-in" id="generate" aria-label="생성" hidden>
+            <form class="genbar glass" id="genForm" novalidate>
+                <div class="genbar-ref">
+                    <button class="genbar-thumb" type="button" id="refZoom" aria-label="참조 사진 크게 보기" disabled>
+                        <span class="hit-img text-thumb" id="genRefThumb" aria-hidden="true">Aa</span>
+                    </button>
+                    <p>
+                        <span id="genRefTitle">문장만으로 생성</span>
+                        <small id="genRefSub">참조 사진 없이 문장만 써요</small>
+                        <button class="text-btn zoom-link" type="button" id="refZoomLink" hidden>크게 보기</button>
+                    </p>
+                </div>
+
+                <div class="genbar-mid">
+                    <div class="seg" role="radiogroup" aria-label="생성 방식">
+                        <label><input type="radio" name="mode" value="text_only" checked>문장만 사용</label>
+                        <label id="modeRefLabel" class="is-disabled" title="스타일 검색을 먼저 해 주세요"><input type="radio" name="mode" value="reference" disabled>참조 사진 사용</label>
+                    </div>
+                    <button class="text-btn adv-toggle" type="button" id="advToggle" aria-expanded="false" aria-controls="advanced">
+                        고급 설정 ▸ <em>(선택 · 기본값으로도 충분해요)</em>
+                    </button>
+                    <span class="warn-line">⚠ 참조 사진 속 제품이나 문구가 결과에 복사될 수 있어요.</span>
+                </div>
+
+                <button class="btn btn-primary" type="submit" id="generateBtn" disabled>생성하기</button>
+            </form>
+
+            <!-- ③ 고급 설정 (선택) -->
+            <div class="advanced glass reveal-in" id="advanced" hidden>
+                <div>
+                    <div class="field" id="adapterField">
+                        <label class="field-label" for="adapterScale">참조 반영 강도 <small>IP-Adapter</small><output id="adapterOut">0.60</output></label>
+                        <input type="range" id="adapterScale" min="0" max="1" step="0.05" value="0.6">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="steps">생성 단계 <small>Steps</small><output id="stepsOut">20</output></label>
+                        <input type="range" id="steps" min="1" max="50" step="1" value="20">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="seed">Seed <small>같은 값이면 같은 결과</small></label>
+                        <input class="seed-input" type="number" id="seed" min="0" step="1" value="42">
+                    </div>
+                    <label class="check" id="fallbackField"><input type="checkbox" id="fallback">참조로 실패하면 문장만으로 다시 시도</label>
+                </div>
+                <div>
+                    <div class="field">
+                        <label class="field-label" for="productScale">제품 크기<output id="scaleOut">0.65</output></label>
+                        <input type="range" id="productScale" min="0.2" max="0.8" step="0.01" value="0.65">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="centerX">가로 위치<output id="xOut">0.50</output></label>
+                        <input type="range" id="centerX" min="0.25" max="0.75" step="0.01" value="0.5">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="centerY">세로 위치<output id="yOut">0.50</output></label>
+                        <input type="range" id="centerY" min="0.25" max="0.75" step="0.01" value="0.5">
+                    </div>
+                    <p class="adv-note">설정을 바꾸면 이전 결과는 지워져요.</p>
+                    <button class="text-btn is-quiet" type="button" id="resetOptions" style="margin-top:10px">기본값으로</button>
+                </div>
+                <div class="placement-col">
+                    <div class="field-label">배치 미리보기<output>512×512</output></div>
+                    <canvas class="placement" id="placement" width="512" height="512" aria-label="캔버스 안의 제품 위치 미리보기"></canvas>
+                    <p class="placement-msg" id="placementMsg"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ④ 결과 -->
+        <section class="result glass reveal-in" id="result" aria-labelledby="resultTitle" hidden>
+            <img class="result-img" id="resultImg" alt="생성된 광고 이미지">
+            <div>
+                <span class="badge" id="resultBadge"></span>
+                <h3 id="resultTitle">광고 이미지가 완성됐어요</h3>
+                <p class="result-sub" id="resultSub">제품은 원본 그대로 두고, 배경만 새로 그렸어요.</p>
+
+                <div class="used">
+                    <div><img id="usedProduct" alt=""><span id="usedProductName"></span></div>
+                    <div id="usedRefBox"><span class="hit-img" id="usedRef" aria-hidden="true"></span><span id="usedRefName"></span></div>
+                </div>
+
+                <div class="actions">
+                    <a class="btn btn-primary" id="downloadPng" download="m4ker_result.png">PNG 다운로드</a>
+                    <button class="btn btn-line" type="button" id="regenerate">다른 Seed로 다시</button>
+                    <button class="btn btn-line" type="button" id="otherRef">다른 참조로</button>
+                </div>
+                <p class="warn-line" style="margin-top:14px">⚠ 참조 사진 속 제품이나 문구가 결과에 복사될 수 있어요.</p>
+
+                <details class="details">
+                    <summary>자세히 보기 <em>(추출한 제품 · 마스크 · 메타데이터)</em></summary>
+                    <div class="masks">
+                        <div><img id="fgImg" alt="추출·배치한 제품"><p>추출·배치한 제품</p></div>
+                        <div><img id="keepImg" alt="보존 마스크"><p>보존 마스크 (흰색 = 제품)</p></div>
+                        <div><img id="repaintImg" alt="재생성 마스크"><p>재생성 마스크</p></div>
+                    </div>
+                    <pre class="meta-json" id="metaJson"></pre>
+                    <div class="actions">
+                        <a class="btn btn-line" id="downloadJson" download="metadata.json">메타데이터 JSON 다운로드</a>
+                        <button class="btn btn-line" type="button" id="releaseBtn">모델 메모리 해제</button>
+                    </div>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <!-- 선택한 참조 사진 크게 보기 (최대 512×512) -->
+    <dialog class="ref-dialog" id="refDialog" aria-labelledby="refDialogCap">
+        <div id="refDialogImg" class="ref-dialog-img"></div>
+        <div class="ref-dialog-foot">
+            <p id="refDialogCap"></p>
+            <button class="btn btn-line" type="button" id="refDialogClose">닫기</button>
+        </div>
+    </dialog>
+
+    <footer class="site-foot">
+        <span>BOAZ 미니프로젝트 4조</span>
+    </footer>
+
+    <script src="./JS/m4ker_input_v2.js"></script>
+</body>
+</html>

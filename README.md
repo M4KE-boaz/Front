@@ -5,9 +5,10 @@ m4ker 웹 화면 (BOAZ 미니프로젝트 4조). 정적 HTML/CSS/JS이며, 검�
 | 파일 | 역할 |
 |---|---|
 | `m4ker_startpage.html` | 시작 화면 |
-| `m4ker_input.html` | 입력 → 비슷한 광고 스타일 Top-5 → 생성 결과 |
+| `m4ker_input.html` | **실제 서버와 연결된 입력 화면** (입력 → 비슷한 광고 스타일 Top-5 → 생성 결과). 시작 화면의 "시작하기"가 여기로 연결 |
+| `m4ker_input_v1.html`, `m4ker_input_v2.html` | 입력 화면 디자인 시안 v1(검색창형)·v2(명세 흐름). v2는 아직 서버 대신 가짜 데이터로 동작 |
 | `JS/m4ker_api.js` | 백엔드 연결 (서버 찾기, 요청/오류 처리) |
-| `JS/m4ker_input.js` | 입력 화면 동작 |
+| `JS/m4ker_input.js` | 입력 화면 동작 (`m4ker_input_v1/v2.js`는 각 시안용) |
 | `css/m4ker_style.css` | 공통 스타일 |
 | `tools/demo-video/` | 시연 영상 녹화 도구 ([사용법](tools/demo-video/README.md)) |
 
@@ -17,8 +18,8 @@ m4ker 웹 화면 (BOAZ 미니프로젝트 4조). 정적 HTML/CSS/JS이며, 검�
 
 ```bash
 git clone https://github.com/M4KE-boaz/Front.git
-git clone https://github.com/M4KE-boaz/CLIP-AdStyle.git   # 데모 기능은 exp/demo-ko-generation 브랜치
-cd CLIP-AdStyle && git checkout exp/demo-ko-generation
+git clone https://github.com/M4KE-boaz/CLIP-AdStyle.git   # 데모·API 모두 main에 있음
+cd CLIP-AdStyle
 
 # 모델 없이 화면 흐름만 확인 (진단 모드, AI 생성 결과 아님)
 .venv/bin/python server.py --mock --front-dir ../Front
@@ -46,4 +47,4 @@ Front만 따로 띄워도 됩니다 (VS Code Live Server 등). 화면은 서버�
 세부 설정의 `기존 설정` / `개선 후보 설정` 버튼으로 제품 크기·위치·참고 강도와
 가장자리·프롬프트 보강을 전환할 수 있습니다. 후보는 text-only GPU 비교를 진행한 값이며 최적값으로 확정하지 않았습니다.
 가장자리/프롬프트 보강에는 11/17 변경분이 반영된 백엔드가 필요합니다.
-API 및 격자 실험 사용법은 [생성 비교 사용법](https://github.com/M4KE-boaz/CLIP-AdStyle/blob/docs/evaluation-summary/docs/GENERATION_FEEDBACK.md)를 참고하세요.
+API 및 격자 실험 사용법은 [생성 비교 사용법](https://github.com/M4KE-boaz/CLIP-AdStyle/blob/main/docs/GENERATION_FEEDBACK.md)를 참고하세요.

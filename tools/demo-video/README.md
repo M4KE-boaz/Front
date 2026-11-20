@@ -12,6 +12,19 @@ m4ker 입력 화면에서 "사진 끌어다 놓기 → 프롬프트 타이핑 �
 
 생성을 기다리는 시간도 빨리감기 없이 실제 시간 그대로 녹화된다.
 
+## 처음 해 보는 사람용 요약
+
+내 컴퓨터든 학교 GPU 서버든, **`server.py`가 떠 있는 곳의 화면을 Chrome으로 열 수만 있으면** 녹화할 수 있다.
+
+1. CLIP-AdStyle(main)에 검색용 파일을 받는다. git에는 없고 따로 전달받는 압축 파일이다(인덱스·LoRA adapter·갤러리 1,266장·CLIP 원본). 저장소 루트에서 풀면 끝.
+2. 서버를 켠다. GPU가 있으면 `server.py --config configs/demo-versions-gpu.json --gpu-approved --front-dir ../Front`, 없으면 `--mock`(진단 모드)로 먼저 연습한다.
+3. 제품 사진을 `tools/demo-video/products/`에 둔다. 직접 찍은 사진도 된다(단색 배경, 제품 하나).
+4. `configs/` 중 하나를 복사해서 `image`, `typed`, `styleCard`, `pick`만 바꾼다.
+5. Front 루트에서 `node tools/demo-video/record.mjs tools/demo-video/configs/내설정.json` → `tools/demo-video/out/`에 mp4.
+
+- **녹화하는 컴퓨터:** Node 22+, Chrome, ffmpeg가 필요하다. 서버(Linux)에서 바로 녹화하면 Chrome 경로를 알려 준다: `CHROME_PATH=/usr/bin/google-chrome node ...`. 노트북에서 녹화하고 서버는 원격이면 `ssh -L 8000:127.0.0.1:8000 서버`로 포트만 연결한다.
+- 서버를 다 쓰면 꼭 끈다. 모델이 GPU 메모리를 계속 잡고 있다.
+
 ## 구성
 
 | 파일 | 역할 |
